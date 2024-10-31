@@ -14,21 +14,30 @@ export default function Workouts() {
 
     // Fetch active workouts
     const fetchWorkouts = () => {
-        let fetchURL = `${process.env.REACT_APP_API_BASE_URL}/workouts/getMyWorkouts`;
+    const fetchURL = `${process.env.REACT_APP_API_BASE_URL}/workouts/getMyWorkouts`;
 
-        fetch(fetchURL, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    fetch(fetchURL, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return res.json();
         })
-            .then(res => res.json())
-            .then(data => {
-                setWorkouts(data);
-            })
-            .catch(err => {
-                console.error("Failed to fetch workouts:", err);
-            });
-    };
+        .then(data => {
+            // Adjust this based on your API response structure
+            console.log('Fetched workouts:', data);
+            setWorkouts(data.workouts || []); // Assuming workouts are nested under `workouts`
+        })
+        .catch(err => {
+            console.error("Failed to fetch workouts:", err);
+        });
+};
+
 
     useEffect(() => {
+        console.log('Current user:', user); // Log user context
         if (user) {
             fetchWorkouts();
         }

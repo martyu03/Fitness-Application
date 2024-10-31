@@ -1,6 +1,6 @@
-// pages/AddWorkouts.js
+// pages/AddWorkout.js
 import { useState, useEffect, useContext } from 'react';
-import { Button, Modal, Form } from 'react-bootstrap';
+import { Button, Form, Container, Row, Col } from 'react-bootstrap';
 import { Navigate } from 'react-router-dom';
 import UserContext from '../context/UserContext';
 import { Notyf } from 'notyf';
@@ -12,7 +12,6 @@ export default function AddWorkout() {
     const [duration, setDuration] = useState('');
     const [isActive, setIsActive] = useState(false);
     const [redirect, setRedirect] = useState(false);
-    const [showModal, setShowModal] = useState(false); 
 
     useEffect(() => {
         if (workoutName && duration) {
@@ -37,55 +36,40 @@ export default function AddWorkout() {
         })
         .then(res => res.json())
         .then(data => {
-            if (data.message === 'Workout added successfully') {
+            console.log(data);
+            if (data) {
                 notyf.success('Workout Added');
                 setWorkoutName('');
                 setDuration('');
                 setRedirect(true);
-                setShowModal(false); // Close the modal after success
-            } else if (data.message === 'Workout already exists') {
-                notyf.error('Workout Already Exists');
-                setWorkoutName('');
-                setDuration('');
             } else {
                 notyf.error('Unsuccessful Workout Creation');
-                setWorkoutName('');
-                setDuration('');
             }
         });
     }
 
-    // Removed the admin check
     // If redirecting after successful addition
     if (redirect) {
         return <Navigate to="/workouts" />;
     }
 
     return (
-        <>
-            {/* Button to trigger modal */}
-            <Button variant="primary" onClick={() => setShowModal(true)}>
-                Add Workout
-            </Button>
-
-            {/* Modal */}
-            <Modal show={showModal} onHide={() => setShowModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Add Workout</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
+        <Container className="my-4">
+            <Row>
+                <Col md={{ span: 6, offset: 3 }}>
+                    <h2 className="text-center mb-4">Add Workout</h2>
                     <Form onSubmit={handleSubmit}>
                         <Form.Group>
                             <Form.Label>Name</Form.Label>
                             <Form.Control
                                 type="text"
-                                placeholder="Enter name"
+                                placeholder="Enter workout name"
                                 value={workoutName}
                                 onChange={(e) => setWorkoutName(e.target.value)}
                                 required
                             />
                         </Form.Group>
-                        <Form.Group>
+                        <Form.Group className="mt-3">
                             <Form.Label>Duration</Form.Label>
                             <Form.Control
                                 type="text"
@@ -95,20 +79,14 @@ export default function AddWorkout() {
                                 required
                             />
                         </Form.Group>
-                        <div className="text-center mt-3">
-                            {isActive ? (
-                                <Button variant="primary" type="submit">
-                                    Submit
-                                </Button>
-                            ) : (
-                                <Button variant="danger" type="submit" disabled>
-                                    Submit
-                                </Button>
-                            )}
+                        <div className="text-center mt-4">
+                            <Button variant="primary" type="submit" disabled={!isActive}>
+                                Submit
+                            </Button>
                         </div>
                     </Form>
-                </Modal.Body>
-            </Modal>
-        </>
+                </Col>
+            </Row>
+        </Container>
     );
 }

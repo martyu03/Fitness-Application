@@ -1,20 +1,21 @@
 // src/components/UserView.js
 import React from 'react';
-import { Row } from 'react-bootstrap';
-import WorkoutCard from './WorkoutsCard'; // Assuming you have a WorkoutCard component
+import WorkoutsCard from './WorkoutsCard';
+import { Row, Col } from 'react-bootstrap';
 
-const UserView = ({ workoutsData }) => {
-    if (!Array.isArray(workoutsData) || workoutsData.length === 0) {
-        return <p>No workouts available.</p>;
+export default function UserView({ workoutsData }) {
+    if (!workoutsData || workoutsData.length === 0) {
+        return <div>No workouts available</div>; 
     }
 
     return (
         <Row>
-            {workoutsData.map(workout => (
-                <WorkoutCard key={workout._id} workoutProp={workout} />
+            {workoutsData.map((workout) => (
+                <Col key={workout._id} sm={12} md={6} lg={4} className="mb-4">
+                    <WorkoutsCard workoutsProp={workout} />
+                </Col>
             ))}
         </Row>
     );
 }
 
-export default UserView;
