@@ -22,11 +22,9 @@ export default function Workouts() {
             .then(res => res.json())
             .then(data => {
                 setWorkouts(data);
-                 setLoading(false);
             })
             .catch(err => {
                 console.error("Failed to fetch workouts:", err);
-                 setLoading(false);
             });
     };
 
