@@ -1,4 +1,3 @@
-// pages/Login.js
 import { useState, useEffect, useContext } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { Navigate } from 'react-router-dom';
@@ -61,7 +60,7 @@ export default function Login() {
     }, [email, password]);
 
     return (
-        user.id !== null ? <Navigate to="/" /> :
+        user && user.id !== null ? <Navigate to="/" /> :  // Check if user is not null
             <Form onSubmit={authenticate}>
                 <h1 className="my-5 text-center">Login</h1>
 

@@ -15,6 +15,8 @@ export default function Workouts() {
     const [showModal, setShowModal] = useState(false);
     const [newWorkoutName, setNewWorkoutName] = useState('');
     const [newDuration, setNewDuration] = useState('');
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
+    const [selectedWorkoutId, setSelectedWorkoutId] = useState(null);
 
     // Fetch active workouts
     const fetchWorkouts = () => {
@@ -24,16 +26,15 @@ export default function Workouts() {
         })
             .then(res => res.json())
             .then(data => {
+                console.log("Fetched Workouts:", data); // Log the fetched workouts
                 setWorkouts(data.workouts || []);
             })
             .catch(err => console.error("Failed to fetch workouts:", err));
     };
 
     useEffect(() => {
-        if (user) {
-            fetchWorkouts();
-        }
-    }, [user]);
+        fetchWorkouts();
+    }, []);
 
     const handleSearchByName = async (e) => {
         e.preventDefault();
@@ -90,91 +91,180 @@ export default function Workouts() {
         setSearchResults([]);
     };
 
+    // Delete workout function
+    const handleDeleteWorkout = (workoutId) => {
+        fetch(`${process.env.REACT_APP_API_BASE_URL}/workouts/deleteWorkout/${workoutId}`, {
+            method: 'DELETE',
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data) {
+                    notyf.success('Workout Deleted');
+                    fetchWorkouts(); // Refresh workouts after deletion
+                } else {
+                    notyf.error('Error deleting workout: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(err => notyf.error('Network error while deleting workout'));
+    };
+
+    const handleOpenUpdateModal = (workout) => {
+        setSelectedWorkoutId(workout._id);
+        setNewWorkoutName(workout.name);
+        setNewDuration(workout.duration);
+        setShowUpdateModal(true);
+    };
+
+    const handleUpdateWorkout = (e) => {
+        e.preventDefault();
+        fetch(`${process.env.REACT_APP_API_BASE_URL}/workouts/updateWorkout/${selectedWorkoutId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                name: newWorkoutName,
+                duration: newDuration
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data) {
+                    notyf.success('Workout Updated');
+                    setShowUpdateModal(false);
+                    fetchWorkouts(); // Refresh workouts after update
+                } else {
+                    notyf.error('Unsuccessful Workout Update');
+                }
+            });
+    };
+
     return (
-    <Container className="halloween-theme">
-        <div className="halloween-overlay"></div>
-        <div className="extreme-content">
-            <h1 className="halloween-header text-center">Workout Search - Halloween Special 🎃</h1>
-            <Form>
-                <Form.Group controlId="workoutName">
-                    <Form.Label>Workout Name</Form.Label>
-                    <Form.Control
-                        type="text"
-                        value={workoutName}
-                        onChange={(e) => setWorkoutName(e.target.value)}
-                        placeholder="Enter workout name"
-                    />
-                </Form.Group>
-                <Button onClick={handleSearchByName} className="mt-3 me-2 halloween-button">
-                    Search by Name
-                </Button>
-                <Button onClick={handleClear} className="mt-3 halloween-button">
-                    Clear
-                </Button>
-            </Form>
-
-            <h1 className="halloween-header mt-4 text-center">Search Results</h1>
-            {searchResults.length > 0 ? (
-                <ListGroup>
-                    {searchResults.map((workout) => (
-                        <ListGroup.Item key={workout._id} className="extreme-list-item">
-                            <h5>{workout.name}</h5>
-                            <p>Duration: {workout.duration} minutes</p>
-                            <p>{workout.description}</p>
-                        </ListGroup.Item>
-                    ))}
-                </ListGroup>
-            ) : (
-                <p>No workouts found.</p>
-            )}
-
-            <Row>
-                <Col xs={12} className="mb-4 text-center">
-                    <h1 className="halloween-header">My Workouts</h1>
-                    <Button variant="primary" className="halloween-button" onClick={() => setShowModal(true)}>
-                        Add Workout
+        <Container className="halloween-theme">
+            <div className="halloween-overlay"></div>
+            <div className="extreme-content">
+                <h1 className="halloween-header text-center">Workout Search - Halloween Special 🎃</h1>
+                <Form>
+                    <Form.Group controlId="workoutName">
+                        <Form.Label>Workout Name</Form.Label>
+                        <Form.Control
+                            type="text"
+                            value={workoutName}
+                            onChange={(e) => setWorkoutName(e.target.value)}
+                            placeholder="Enter workout name"
+                        />
+                    </Form.Group>
+                    <Button onClick={handleSearchByName} className="mt-3 me-2 halloween-button">
+                        Search by Name
                     </Button>
-                </Col>
-            </Row>
-            <UserView workoutsData={workouts} />
+                    <Button onClick={handleClear} className="mt-3 halloween-button">
+                        Clear
+                    </Button>
+                </Form>
 
-            {/* Add Workout Modal */}
-            <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Add Workout</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form onSubmit={handleAddWorkout}>
-                        <Form.Group>
-                            <Form.Label>Name</Form.Label>
-                            <Form.Control
-                                type="text"
-                                placeholder="Enter workout name"
-                                value={newWorkoutName}
-                                onChange={(e) => setNewWorkoutName(e.target.value)}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mt-3">
-                            <Form.Label>Duration</Form.Label>
-                            <Form.Control
-                                type="text"
-                                placeholder="Enter duration (e.g., 30 mins)"
-                                value={newDuration}
-                                onChange={(e) => setNewDuration(e.target.value)}
-                                required
-                            />
-                        </Form.Group>
-                        <div className="text-center mt-4">
-                            <Button variant="primary" type="submit" className="halloween-button" disabled={!newWorkoutName || !newDuration}>
-                                Submit
-                            </Button>
-                        </div>
-                    </Form>
-                </Modal.Body>
-            </Modal>
-        </div>
-    </Container>
-);
+                <h1 className="halloween-header mt-4 text-center">Search Results</h1>
+                {searchResults.length > 0 ? (
+                    <ListGroup>
+                        {searchResults.map((workout) => (
+                            <ListGroup.Item key={workout._id} className="extreme-list-item">
+                                <h5>{workout.name}</h5>
+                                <p>Duration: {workout.duration} minutes</p>
+                                <p>{workout.description}</p>
+                                <Button variant="secondary" onClick={() => handleOpenUpdateModal(workout)}>Update</Button>
+                                <Button variant="danger" onClick={() => handleDeleteWorkout(workout._id)}>Delete</Button>
+                            </ListGroup.Item>
+                        ))}
+                    </ListGroup>
+                ) : (
+                    <p>No workouts found.</p>
+                )}
 
+                <Row>
+                    <Col xs={12} className="mb-4 text-center">
+                        <h1 className="halloween-header">My Workouts</h1>
+                        <Button variant="primary" className="halloween-button" onClick={() => setShowModal(true)}>
+                            Add Workout
+                        </Button>
+                    </Col>
+                </Row>
+                <UserView workoutsData={workouts} onDeleteWorkout={handleDeleteWorkout} onUpdateWorkout={handleOpenUpdateModal} />
+
+                {/* Add Workout Modal */}
+                <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Add Workout</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Form onSubmit={handleAddWorkout}>
+                            <Form.Group>
+                                <Form.Label>Name</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Enter workout name"
+                                    value={newWorkoutName}
+                                    onChange={(e) => setNewWorkoutName(e.target.value)}
+                                    required
+                                />
+                            </Form.Group>
+                            <Form.Group className="mt-3">
+                                <Form.Label>Duration</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Enter duration (e.g., 30 mins)"
+                                    value={newDuration}
+                                    onChange={(e) => setNewDuration(e.target.value)}
+                                    required
+                                />
+                            </Form.Group>
+                            <div className="text-center mt-4">
+                                <Button variant="primary" type="submit" className="halloween-button" disabled={!newWorkoutName || !newDuration}>
+                                    Submit
+                                </Button>
+                            </div>
+                        </Form>
+                    </Modal.Body>
+                </Modal>
+
+                {/* Update Workout Modal */}
+                <Modal show={showUpdateModal} onHide={() => setShowUpdateModal(false)} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Update Workout</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Form onSubmit={handleUpdateWorkout}>
+                            <Form.Group>
+                                <Form.Label>Name</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Enter workout name"
+                                    value={newWorkoutName}
+                                    onChange={(e) => setNewWorkoutName(e.target.value)}
+                                    required
+                                />
+                            </Form.Group>
+                            <Form.Group className="mt-3">
+                                <Form.Label>Duration</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Enter duration (e.g., 30 mins)"
+                                    value={newDuration}
+                                    onChange={(e) => setNewDuration(e.target.value)}
+                                    required
+                                />
+                            </Form.Group>
+                            <div className="text-center mt-4">
+                                <Button variant="primary" type="submit" className="halloween-button" disabled={!newWorkoutName || !newDuration}>
+                                    Update
+                                </Button>
+                            </div>
+                        </Form>
+                    </Modal.Body>
+                </Modal>
+            </div>
+        </Container>
+    );
 }
